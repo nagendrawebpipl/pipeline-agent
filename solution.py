@@ -66,10 +66,11 @@ def stem_of(filename):
     return re.sub(r"_\d+$", "", base)
 
 def process_item(client, item):
-    filename = item["filename"]
-    code     = item["legacy_code"]
-    issues   = item["issues"]
-    goals    = item["refactoring_goals"]
+    inp      = item.get("input", item)
+    filename = inp["filename"]
+    code     = inp["legacy_code"]
+    issues   = inp["issues"]
+    goals    = inp["refactoring_goals"]
     stem     = stem_of(filename)
 
     analysis = _call(client, ANALYSIS_PROMPT.format(
@@ -117,7 +118,9 @@ def main():
     results     = []
     total       = len(test_inputs)
     for idx, item in enumerate(test_inputs, 1):
-        print(f"[{idx}/{total}] Processing {item['filename']} ({item['id']}) ...")
+        inp      = item.get("input", item)
+        filename = inp.get("filename", item["id"])
+        print(f"[{idx}/{total}] Processing {filename} ({item['id']}) ...")
         try:
             result = process_item(client, item)
             results.append(result)
@@ -127,7 +130,7 @@ def main():
             results.append({
                 "id": item["id"],
                 "output": {
-                    "original_filename": item["filename"],
+                    "original_filename": filename,
                     "failure_modes_identified": [],
                     "refactored_modules": [],
                     "counters_schema": {},
@@ -141,4 +144,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
